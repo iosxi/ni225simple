@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "ni225simple",
-  "version": "1.0.0",
-  "description": "日経平均先物（nikkei225jp.com/cme/）の複合チャートだけ／それ以外だけ／すべてを、タブごとに切り替える。",
+  "version": "2.0.0",
+  "description": "日経平均先物（nikkei225jp.com/cme/）の複合チャートだけ／それ以外だけ／すべてを、タブごとに切り替える。サイドバーなどの部品も個別に隠せる。",
   "browser_specific_settings": {
     "gecko": {
       "id": "{94dc8d4a-2c8b-4e71-87c9-d5ebec21ab07}",
@@ -14,6 +14,9 @@
       }
     }
   },
+  "permissions": [
+    "sessions"
+  ],
   "icons": {
     "48": "src/icons/icon.svg",
     "96": "src/icons/icon.svg"

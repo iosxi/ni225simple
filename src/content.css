@@ -3,12 +3,36 @@
 html[data-ni225-mode="chart"] [data-ni225-path] > :not([data-ni225-path]):not([data-ni225-chart]):not(.tooltip-content):not(.tooltip-overlay) {
   display: none !important;
 }
-/* チャートの位置を決めるまでの一瞬、全体が見えてしまうのを防ぐ */
-html[data-ni225-mode="chart"]:not([data-ni225-ready]) body {
+/* 設定の問い合わせと目印付けが済むまでの一瞬、元の表示が見えてしまうのを防ぐ */
+html:not([data-ni225-ready]) body {
   visibility: hidden !important;
 }
 
 /* チャート以外: 複合チャートの表だけを隠す */
 html[data-ni225-mode="other"] [data-ni225-chart] {
+  display: none !important;
+}
+
+/* サイドバーを非表示: モードとは独立。空いた幅を本文の拡大で埋める */
+html[data-ni225-nosidebar] .sidebar {
+  display: none !important;
+}
+html[data-ni225-nosidebar] #content {
+  zoom: 1.42;
+}
+
+/* 赤枠（お知らせ枠）を非表示 */
+html[data-ni225-noakawaku] .akawaku {
+  display: none !important;
+}
+
+/* トップメニューを非表示 */
+html[data-ni225-notopmenu] #topmenu {
+  display: none !important;
+}
+
+/* リンクメニュー（アクセスランキングと日本株の各ページへのリンク）を非表示 */
+html[data-ni225-nolinkmenu] #linkRANK,
+html[data-ni225-nolinkmenu] #linkNIKKEI {
   display: none !important;
 }

@@ -1,39 +1,42 @@
 "use strict";
 
-// モードはページの sessionStorage に置く。sessionStorage はタブごとに別で、
-// Firefox がタブを復元すると（再起動後も）一緒に戻る。これで権限を要求せずに
-// 「タブごとに覚えておく」ができる。
-const KEY = "ni225simple-mode";
-const MODES = ["all", "chart", "other"];
+// 設定の正本は background（sessions のタブ値）にある。問い合わせの返事を待つ間に
+// 一瞬元の表示が見えないよう、同じタブの sessionStorage にも写しを置き、読み込み
+// 直後はそれで描く。写しは同じセッション中の再読込で効き、再起動後は正本で上書きする。
+const CACHE_KEY = "ni225simple-state";
 const root = document.documentElement;
 const CHART_SELECTOR = "#chartTBL";
 
-function loadMode() {
+function loadCache() {
   try {
-    const mode = sessionStorage.getItem(KEY);
-    return MODES.includes(mode) ? mode : "all";
+    return JSON.parse(sessionStorage.getItem(CACHE_KEY));
   } catch {
-    return "all";
+    return null;
   }
 }
 
-function saveMode(mode) {
+function saveCache(state) {
   try {
-    sessionStorage.setItem(KEY, mode);
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(state));
   } catch {
-    // 保存できなくても、今の表示には効かせる
+    // 写しが置けなくても、正本があるので困らない
   }
 }
 
-function applyMode(mode) {
-  if (mode === "chart" || mode === "other") {
-    root.setAttribute("data-ni225-mode", mode);
+// mode は <html data-ni225-mode>、チェックボックスは <html data-ni225-<name>> になる。
+// 効果は content.css に書く
+function apply(state) {
+  if (!state) return;
+  if (state.mode === "chart" || state.mode === "other") {
+    root.setAttribute("data-ni225-mode", state.mode);
   } else {
     root.removeAttribute("data-ni225-mode");
   }
+  for (const [name, on] of Object.entries(state.toggles || {})) {
+    root.toggleAttribute("data-ni225-" + name, Boolean(on));
+  }
   // 表示切替後に Highcharts などが寸法を取り直せるようにする
   window.dispatchEvent(new Event("resize"));
-  browser.runtime.sendMessage({ type: "badge", mode }).catch(() => {});
 }
 
 // 複合チャートから body までの祖先に目印を付ける
@@ -46,23 +49,41 @@ function markChart() {
   }
 }
 
-let mode = loadMode();
-applyMode(mode);
+let ready = false;
+let answered = false;
 
-// ポップアップからの問い合わせと切り替え
+// 「チャートのみ」の目印付けと正本の返事、両方がそろうまで body を隠しておく
+function reveal() {
+  if (ready && answered) root.setAttribute("data-ni225-ready", "");
+}
+
+apply(loadCache());
+
+browser.runtime
+  .sendMessage({ type: "hello" })
+  .then((state) => {
+    saveCache(state);
+    apply(state);
+  })
+  .catch(() => {})
+  .finally(() => {
+    answered = true;
+    reveal();
+  });
+
 browser.runtime.onMessage.addListener((msg) => {
-  if (msg.type === "set" && MODES.includes(msg.mode)) {
-    mode = msg.mode;
-    saveMode(mode);
-    applyMode(mode);
+  if (msg.type === "apply") {
+    saveCache(msg.state);
+    apply(msg.state);
   }
-  return Promise.resolve(mode);
+  // ポップアップが「このタブで使えるか」を確かめるための返事
+  if (msg.type === "ping") return Promise.resolve(true);
 });
 
 function onReady() {
   markChart();
-  // 見つからなくても隠したままにはしない
-  root.setAttribute("data-ni225-ready", "");
+  ready = true;
+  reveal();
 }
 
 if (document.readyState === "loading") {

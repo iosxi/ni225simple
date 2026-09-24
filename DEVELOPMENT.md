@@ -13,11 +13,11 @@ ni225simple の開発メモ。利用者向けの説明は [README.md](README.md)
 
 | ファイル | 役割 |
 | --- | --- |
-| `manifest.json` | MV2。`permissions` は空。content script は `https://nikkei225jp.com/cme/*` のみ |
-| `src/content.js` | モードの保持（sessionStorage）と、複合チャートへの目印付け |
-| `src/content.css` | モードごとの表示・非表示 |
-| `src/popup.html` / `src/popup.js` | ツールバーの 3 択 |
-| `src/background.js` | タブごとのバッジ表示だけ |
+| `manifest.json` | MV2。`permissions` は `sessions` だけ。content script は `https://nikkei225jp.com/cme/*` のみ |
+| `src/background.js` | タブごとの設定の正本（sessions のタブ値）とバッジ |
+| `src/content.js` | 設定を `<html>` の属性に反映、複合チャートへの目印付け |
+| `src/content.css` | 属性ごとの表示・非表示 |
+| `src/popup.html` / `src/popup.js` | ツールバーの 3 択とチェックボックス |
 | `tools/build-xpi.js` | 配布用 XPI の作成（再現可能ビルド） |
 | `tools/sign.js` | AMO 署名（unlisted） |
 | `tools/fetch-signed.js` | 署名済み XPI の取得のみやり直す |
@@ -36,23 +36,40 @@ ni225simple の開発メモ。利用者向けの説明は [README.md](README.md)
 モードは `<html data-ni225-mode>` に置く。「複合チャートのみ」では目印付けが
 済むまで `body` を `visibility:hidden` にして、一瞬全体が見えるのを防ぐ。
 
-### タブごとの記憶を sessionStorage にしている理由
+### タブごとの記憶
 
-`sessionStorage` はタブごとに独立していて、Firefox のセッション復元で一緒に
-戻る。`browser.sessions.setTabValue` でも同じことができるが、`sessions` 権限が
-要り、インストール時の確認に「最近閉じたタブへのアクセス」が増える（実測）。
-権限を増やさないためにこちらを選んだ。
+設定 `{ mode, toggles: { nosidebar, noakawaku, notopmenu, nolinkmenu } }` を
+`browser.sessions.setTabValue(tabId, "state", …)` でタブに結び付ける。
+Firefox がタブを復元すると値も戻る。再起動でタブ ID が変わっても追従する
+（ヘッドレス Firefox 156 で、同じプロファイルの終了→再起動を 1 タブ 3 回・
+2 タブ 3 回試し、全回で戻った）。
 
-`content_scripts` は `document_start` で動き、`sessionStorage` は同期で読めるので、
-ページの描画前にモードが決まる。
+**sessionStorage は使えない。** v1 はページの sessionStorage に置いていたが、
+Firefox 156 の既定では `browser.sessionstore.collect_session_storage` が false で、
+セッション復元に含まれない（実測）。v1 の再起動試験で戻ったのはたまたま。
+
+content.js は同じタブの sessionStorage に**写し**を置き、読み込み直後はそれで
+描いてから background に正本を問い合わせる。返事が来るまでと、複合チャートへの
+目印付けが済むまでは `body` を `visibility:hidden` にして、元の表示が一瞬
+見えるのを防ぐ。
+
+### チェックボックスを足すとき
+
+1. `src/popup.html` に `<input type="checkbox" name="<name>">` を足す
+2. `src/background.js` の `TOGGLES` に `<name>` を足す
+3. `src/content.css` に `html[data-ni225-<name>] <セレクタ> { … }` を足す
 
 ### 権限
 
-`permissions` は空。インストール時の確認に出るのは、content script の対象から
-来る「nikkei225jp.com ドメイン下のサイトデータへのアクセス」の 1 行だけ
+`permissions` は `sessions` だけ。インストール時の確認に出るのは次の 2 行
 （Firefox 156 の `ExtensionData.formatPermissionStrings` で実測）。
-ポップアップは `tabs.query({active})` でタブ ID を取り、`tabs.sendMessage` で
-content script と話す。どちらも `tabs` 権限なしで使える範囲に収めている
+
+- 「nikkei225jp.com ドメイン下のサイトデータへのアクセス」— content script の対象から
+- 「最近閉じたタブへのアクセス」— `sessions` から
+
+権限なしでタブを再起動越しに見分ける手段が無いため、`sessions` は外せない。
+ポップアップは `tabs.query({active})` でタブ ID を取り、`tabs.sendMessage` の
+返事の有無で対象ページかを判断する。どちらも `tabs` 権限なしで使える範囲
 （URL やタイトルは読まない）。
 
 権限を足すときは、この確認文がどう変わるかを実測してから決めること。
