@@ -38,7 +38,7 @@ ni225simple の開発メモ。利用者向けの説明は [README.md](README.md)
 
 ### タブごとの記憶
 
-設定 `{ mode, toggles: { nosidebar, noakawaku, notopmenu, nolinkmenu } }` を
+設定 `{ mode, toggles: { nosidebar, noakawaku, notopmenu, nolinkmenu, noheader } }` を
 `browser.sessions.setTabValue(tabId, "state", …)` でタブに結び付ける。
 Firefox がタブを復元すると値も戻る。再起動でタブ ID が変わっても追従する
 （ヘッドレス Firefox 156 で、同じプロファイルの終了→再起動を 1 タブ 3 回・

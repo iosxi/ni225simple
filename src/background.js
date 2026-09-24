@@ -5,7 +5,7 @@
 // （browser.sessionstore.collect_session_storage = false）では復元されないので使えない。
 const KEY = "state";
 const MODES = ["all", "chart", "other"];
-const TOGGLES = ["nosidebar", "noakawaku", "notopmenu", "nolinkmenu"];
+const TOGGLES = ["nosidebar", "noakawaku", "notopmenu", "nolinkmenu", "noheader"];
 const BADGE = { all: "", chart: "図", other: "他" };
 
 function normalize(raw) {

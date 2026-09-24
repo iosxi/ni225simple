@@ -36,3 +36,10 @@ html[data-ni225-nolinkmenu] #linkRANK,
 html[data-ni225-nolinkmenu] #linkNIKKEI {
   display: none !important;
 }
+
+/* ヘッダーを非表示: #navArea と、それより前にある兄弟（見出し・株価帯・時計・
+   トップメニューなど）をすべて隠す */
+html[data-ni225-noheader] #navArea,
+html[data-ni225-noheader] :has(~ #navArea) {
+  display: none !important;
+}
