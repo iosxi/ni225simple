@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; padding: 8px; font: 14px system-ui, sans-serif; min-width: 180px; }
+  label { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
+  label:hover { background: #0000000f; }
+  .note { margin: 6px 8px 0; max-width: 200px; font-size: 12px; opacity: .65; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #2b2a33; color: #fbfbfe; }
+    label:hover { background: #ffffff1a; }
+  }
+</style>
+</head>
+<body>
+  <label><input type="radio" name="mode" value="chart">複合チャートのみ</label>
+  <label><input type="radio" name="mode" value="other">複合チャート以外</label>
+  <label><input type="radio" name="mode" value="all">すべて</label>
+  <p class="note">このタブだけに効きます</p>
+  <script src="popup.js"></script>
+</body>
+</html>

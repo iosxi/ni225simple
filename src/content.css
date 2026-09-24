@@ -1,0 +1,14 @@
+/* チャートのみ: 複合チャートへ至る祖先の兄弟をすべて隠す。
+   ページの「?」説明（body 直下の tooltip-*）は開いたときに見えるよう残す。 */
+html[data-ni225-mode="chart"] [data-ni225-path] > :not([data-ni225-path]):not([data-ni225-chart]):not(.tooltip-content):not(.tooltip-overlay) {
+  display: none !important;
+}
+/* チャートの位置を決めるまでの一瞬、全体が見えてしまうのを防ぐ */
+html[data-ni225-mode="chart"]:not([data-ni225-ready]) body {
+  visibility: hidden !important;
+}
+
+/* チャート以外: 複合チャートの表だけを隠す */
+html[data-ni225-mode="other"] [data-ni225-chart] {
+  display: none !important;
+}
