@@ -30,6 +30,15 @@ function stateFromURL(href) {
   return normalize(raw);
 }
 
+// title の末尾に付ける設定の説明。例: "mode=other notopmenu noheader"（既定値のものは書かない）
+function stateLabel(state) {
+  const words = state.mode === "all" ? [] : ["mode=" + state.mode];
+  for (const name of TOGGLES) {
+    if (state.toggles[name]) words.push(name);
+  }
+  return words.join(" ");
+}
+
 // 設定を表す URL。ページ自身のパラメータとハッシュは残し、既定値のものは書かない
 function urlWithState(href, state) {
   const url = new URL(href);

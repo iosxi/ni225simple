@@ -65,6 +65,18 @@ function showInURL(state) {
   history.replaceState(history.state, "", urlWithState(location.href, normalize(state)));
 }
 
+// title の末尾にも設定を書く（ブックマークやタブで見分けられるように）。元の title は
+// DOMContentLoaded の時点で控える。それより前に設定が決まったら、控えてから書く
+let baseTitle = null;
+let lastState = null;
+
+function showInTitle(state) {
+  lastState = state;
+  if (baseTitle === null) return;
+  const label = stateLabel(normalize(state));
+  document.title = label ? baseTitle + " " + label : baseTitle;
+}
+
 // URL で設定を指定されて開いたとき（ブックマークなど）は、それをこのタブの設定にする。
 // 指定がなければ、このタブで覚えている設定を使う
 const fromURL = stateFromURL(location.href);
@@ -76,6 +88,7 @@ browser.runtime
     saveCache(state);
     apply(state);
     showInURL(state);
+    showInTitle(state);
   })
   .catch(() => {})
   .finally(() => {
@@ -88,6 +101,7 @@ browser.runtime.onMessage.addListener((msg) => {
     saveCache(msg.state);
     apply(msg.state);
     showInURL(msg.state);
+    showInTitle(msg.state);
   }
   // ポップアップが「このタブで使えるか」を確かめるための返事
   if (msg.type === "ping") return Promise.resolve(true);
@@ -95,6 +109,8 @@ browser.runtime.onMessage.addListener((msg) => {
 
 function onReady() {
   markChart();
+  baseTitle = document.title;
+  if (lastState) showInTitle(lastState);
   ready = true;
   reveal();
 }

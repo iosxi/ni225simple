@@ -88,3 +88,6 @@ Firefox 142 以降が必要です。
 
 ポップアップで設定を変えると URL も書き換わります（履歴は増えません）。
 すべて既定値に戻すと、パラメータは消えます。
+
+ページのタイトルの末尾にも設定が付くので、ブックマークやタブで見分けられます。例:
+`?mode=other&notopmenu=1&noheader=1` →「225先物 CME SGX 大取 夜間 リアルタイム チャート mode=other notopmenu noheader」
