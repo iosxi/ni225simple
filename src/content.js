@@ -57,13 +57,25 @@ function reveal() {
   if (ready && answered) root.setAttribute("data-ni225-ready", "");
 }
 
-apply(loadCache());
+// 今の設定をアドレスバーの URL にも書く。そのままブックマークすれば、同じ設定で開ける。
+// 履歴は増やさない（replaceState）
+function showInURL(state) {
+  const current = stateFromURL(location.href) || normalize(null);
+  if (sameState(current, normalize(state))) return;
+  history.replaceState(history.state, "", urlWithState(location.href, normalize(state)));
+}
+
+// URL で設定を指定されて開いたとき（ブックマークなど）は、それをこのタブの設定にする。
+// 指定がなければ、このタブで覚えている設定を使う
+const fromURL = stateFromURL(location.href);
+apply(fromURL || loadCache());
 
 browser.runtime
-  .sendMessage({ type: "hello" })
+  .sendMessage({ type: "hello", state: fromURL })
   .then((state) => {
     saveCache(state);
     apply(state);
+    showInURL(state);
   })
   .catch(() => {})
   .finally(() => {
@@ -75,6 +87,7 @@ browser.runtime.onMessage.addListener((msg) => {
   if (msg.type === "apply") {
     saveCache(msg.state);
     apply(msg.state);
+    showInURL(msg.state);
   }
   // ポップアップが「このタブで使えるか」を確かめるための返事
   if (msg.type === "ping") return Promise.resolve(true);

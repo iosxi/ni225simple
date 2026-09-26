@@ -14,6 +14,7 @@ ni225simple の開発メモ。利用者向けの説明は [README.md](README.md)
 | ファイル | 役割 |
 | --- | --- |
 | `manifest.json` | MV2。`permissions` は `sessions` だけ。content script は `https://nikkei225jp.com/cme/*` のみ |
+| `src/state.js` | 設定の形（`MODES` / `TOGGLES` / `normalize`）と URL パラメータとの変換。background と content script の両方で読む |
 | `src/background.js` | タブごとの設定の正本（sessions のタブ値）とバッジ |
 | `src/content.js` | 設定を `<html>` の属性に反映、複合チャートへの目印付け |
 | `src/content.css` | 属性ごとの表示・非表示 |
@@ -53,10 +54,27 @@ content.js は同じタブの sessionStorage に**写し**を置き、読み込�
 目印付けが済むまでは `body` を `visibility:hidden` にして、元の表示が一瞬
 見えるのを防ぐ。
 
+### URL で指定された設定（ブックマーク用）
+
+`?mode=chart&nosidebar=1` のように、`mode` かチェックボックス名のパラメータが
+1 つでもあれば URL の指定を優先する（書いていない項目は既定値）。content.js は
+それで即座に描き、`hello` に `state` として添えて送り、background がタブ値に保存する。
+パラメータが 1 つもなければ従来どおりタブ値を使う。
+
+設定が決まるたび（`hello` の返事、ポップアップからの `apply`）に、content.js が
+`history.replaceState` で URL を今の設定に合わせる。既定値の項目は書かないので、
+すべて既定値ならパラメータは消える。ページ自身のパラメータとハッシュは残す。
+設定と URL が同じ意味なら書き換えない（`?mode=xyz&noakawaku` のような表記も残る）。
+
+ヘッドレス Firefox 156 で確かめたこと: URL 指定で開くと表示・ポップアップ・タブ値が
+その設定になる / ポップアップで変えると URL が追従し `history.length` は増えない /
+再読込で保たれる / 既定値に戻すとパラメータが消える / `?p=1…#chartTBL` の
+`p` とハッシュが残る / 別タブの URL 指定は他のタブに影響しない。
+
 ### チェックボックスを足すとき
 
 1. `src/popup.html` に `<input type="checkbox" name="<name>">` を足す
-2. `src/background.js` の `TOGGLES` に `<name>` を足す
+2. `src/state.js` の `TOGGLES` に `<name>` を足す（URL パラメータ名にもなる）
 3. `src/content.css` に `html[data-ni225-<name>] <セレクタ> { … }` を足す
 
 ### 権限

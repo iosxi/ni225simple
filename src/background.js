@@ -3,17 +3,9 @@
 // タブごとの設定は sessions のタブ値として持つ。Firefox がタブを復元すると
 // （再起動後も）値も一緒に戻る。ページの sessionStorage は Firefox 156 の既定
 // （browser.sessionstore.collect_session_storage = false）では復元されないので使えない。
+// MODES / TOGGLES / normalize は state.js にある。
 const KEY = "state";
-const MODES = ["all", "chart", "other"];
-const TOGGLES = ["nosidebar", "noakawaku", "notopmenu", "nolinkmenu", "noheader"];
 const BADGE = { all: "", chart: "図", other: "他" };
-
-function normalize(raw) {
-  const state = { mode: "all", toggles: {} };
-  if (raw && MODES.includes(raw.mode)) state.mode = raw.mode;
-  for (const name of TOGGLES) state.toggles[name] = Boolean(raw && raw.toggles && raw.toggles[name]);
-  return state;
-}
 
 async function getState(tabId) {
   return normalize(await browser.sessions.getTabValue(tabId, KEY));
@@ -26,8 +18,15 @@ function showBadge(tabId, mode) {
 
 browser.runtime.onMessage.addListener(async (msg, sender) => {
   if (msg.type === "hello" && sender.tab) {
-    // content script から: 自分のタブの設定を問い合わせる
-    const state = await getState(sender.tab.id);
+    // content script から: 自分のタブの設定を問い合わせる。URL で設定を指定されて
+    // 開いたとき（ブックマークなど）は、それをこのタブの設定として覚える
+    let state;
+    if (msg.state) {
+      state = normalize(msg.state);
+      await browser.sessions.setTabValue(sender.tab.id, KEY, state);
+    } else {
+      state = await getState(sender.tab.id);
+    }
     showBadge(sender.tab.id, state.mode);
     return state;
   }
